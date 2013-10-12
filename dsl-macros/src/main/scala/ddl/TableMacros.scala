@@ -24,7 +24,7 @@ object TableMacros extends ReflectionUtils {
     val apply_term = newTermName("apply")
     val table_string_interpolator_name = newTermName("t")
 
-    def findTableDeclarations(t: Tree): Boolean = t match {
+    def findTableName(t: Tree): Boolean = t match {
       case
         Select(Apply(Select(_, named_string_interpolator_candidate), List(Apply(Select(Select(Ident(scala_term_candidate), string_context_candidate), apply_candidate), List(Literal(Constant(_)))))), table_interpolator_name_candidate)
         if   named_string_interpolator_term == named_string_interpolator_candidate
@@ -35,41 +35,12 @@ object TableMacros extends ReflectionUtils {
       =>
         true
       case _ =>
-        //println(showRaw(t))
-        false
-    }
-
-    //Perhaps use c.eval() so we don't have to require the constant?
-    def findTableName(t: Tree): Boolean = t match {
-      case
-        Apply(
-          Select(
-            Apply(
-              Ident(string_context_candidate),
-              List(Literal(Constant(table_name_candidate)))
-            ),
-            string_interpolator_candidate
-          ), _
-        )
-        if string_context_name == string_context_candidate
-        && table_string_interpolator_name == string_interpolator_candidate
-      =>
-        true
-      case _ =>
         false
     }
 
     def extractTableName(t: Tree): Option[String] = t match {
       case
-        Apply(
-          Select(
-            Apply(
-              Ident(_),
-              List(Literal(Constant(table_name)))
-            ),
-            _
-          ), _
-        )
+        Select(Apply(Select(_, _), List(Apply(_, List(Literal(Constant(table_name)))))), _)
       =>
         Some(table_name.toString.trim)
       case _ =>
@@ -90,13 +61,10 @@ object TableMacros extends ReflectionUtils {
       )
     }
 
-    println(n)
-
     val table_decls =
       for {
         body <- Some(n.tree)
-        table_tree = body.find(findTableDeclarations).getOrElse(c.abort(c.enclosingPosition, s"Unable to locate a table given:\n${show(body)}"))
-        table_name_tree = table_tree.find(findTableName).getOrElse(c.abort(c.enclosingPosition, s"Unable to locate a table name. Please ensure that the provided name is a string literal without interpolated values. Was given:\n${show(table_tree)}"))
+        table_name_tree = body.find(findTableName).getOrElse(c.abort(c.enclosingPosition, s"Unable to locate a table name. Please ensure that the provided name is a string literal without interpolated values. Was given:\n${show(body)}"))
         table_name = extractTableName(table_name_tree).getOrElse(c.abort(c.enclosingPosition, s"Unable to determine the table name given:\n${show(table_name_tree)}"))
         clean_table_name = cleanTableName(table_name).getOrElse(c.abort(c.enclosingPosition, s"Invalid table name: $table_name. Must be a valid identifier."))
       } yield {
