@@ -18,16 +18,24 @@ object TableMacros extends ReflectionUtils {
     import c.{ universe => u }
     import c.universe.{Name => uName}
 
-
+    val named_string_interpolator_term = newTermName("NamedStringInterpolator")
+    val scala_term = newTermName("scala")
     val string_context_name = newTermName("StringContext")
+    val apply_term = newTermName("apply")
     val table_string_interpolator_name = newTermName("t")
 
-    val looking_for = typeOf[CREATE.TABLE.type].termSymbol.name
-
     def findTableDeclarations(t: Tree): Boolean = t match {
-      case Apply(Select(Ident(_), x), y) if x == looking_for =>
+      case
+        Select(Apply(Select(_, named_string_interpolator_candidate), List(Apply(Select(Select(Ident(scala_term_candidate), string_context_candidate), apply_candidate), List(Literal(Constant(_)))))), table_interpolator_name_candidate)
+        if   named_string_interpolator_term == named_string_interpolator_candidate
+          && scala_term == scala_term_candidate
+          && string_context_name == string_context_candidate
+          && apply_term == apply_candidate
+          && table_string_interpolator_name == table_interpolator_name_candidate
+      =>
         true
       case _ =>
+        //println(showRaw(t))
         false
     }
 
@@ -82,10 +90,11 @@ object TableMacros extends ReflectionUtils {
       )
     }
 
+    println(n)
+
     val table_decls =
       for {
-        unit <- c.enclosingRun.units
-        body = unit.body
+        body <- Some(n.tree)
         table_tree = body.find(findTableDeclarations).getOrElse(c.abort(c.enclosingPosition, s"Unable to locate a table given:\n${show(body)}"))
         table_name_tree = table_tree.find(findTableName).getOrElse(c.abort(c.enclosingPosition, s"Unable to locate a table name. Please ensure that the provided name is a string literal without interpolated values. Was given:\n${show(table_tree)}"))
         table_name = extractTableName(table_name_tree).getOrElse(c.abort(c.enclosingPosition, s"Unable to determine the table name given:\n${show(table_name_tree)}"))
