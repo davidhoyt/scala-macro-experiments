@@ -25,14 +25,7 @@ object TableMacros extends ReflectionUtils {
     val table_string_interpolator_name = newTermName("t")
 
     def findTableName(t: Tree): Boolean = t match {
-      case
-        Select(Apply(Select(_, named_string_interpolator_candidate), List(Apply(Select(Select(Ident(scala_term_candidate), string_context_candidate), apply_candidate), List(Literal(Constant(_)))))), table_interpolator_name_candidate)
-        if   named_string_interpolator_term == named_string_interpolator_candidate
-          && scala_term == scala_term_candidate
-          && string_context_name == string_context_candidate
-          && apply_term == apply_candidate
-          && table_string_interpolator_name == table_interpolator_name_candidate
-      =>
+      case q"${_}.NamedStringInterpolator(scala.StringContext.apply(${_})).t" =>
         true
       case _ =>
         false
@@ -40,7 +33,8 @@ object TableMacros extends ReflectionUtils {
 
     def extractTableName(t: Tree): Option[String] = t match {
       case
-        Select(Apply(Select(_, _), List(Apply(_, List(Literal(Constant(table_name)))))), _)
+        q"${_}(${_}(${Literal(Constant(table_name: String))})).${_}"
+        // Select(Apply(Select(_, _), List(Apply(_, List(Literal(Constant(table_name)))))), _)
       =>
         Some(table_name.toString.trim)
       case _ =>
