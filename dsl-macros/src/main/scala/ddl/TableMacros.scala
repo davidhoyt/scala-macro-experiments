@@ -2,6 +2,11 @@ package ddl
 
 import scala.reflect.macros.Context
 import scala.language.experimental.macros
+import scala.annotation.StaticAnnotation
+
+class Schema extends StaticAnnotation {
+  def macroTransform(annottees: Any*) = macro TableMacros.schema
+}
 
 object TableMacros extends ReflectionUtils {
   def check(t: Table) = macro TableMacros.check_impl
@@ -10,6 +15,16 @@ object TableMacros extends ReflectionUtils {
     //<[ () ]>
     c.abort(c.enclosingPosition, "DOH")
     c.Expr[Unit](Block(List(), Literal(Constant())))
+  }
+
+  def schema(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+    import c.universe._
+    import c.{ universe => u }
+
+    println("HELLO??")
+    val inputs = annottees.map(_.tree).toList
+
+    reify(())
   }
 
   def create[T: c.WeakTypeTag](c: Context)(n: c.Expr[Named[T]]): c.Expr[Unit] = {
@@ -74,116 +89,6 @@ object TableMacros extends ReflectionUtils {
     //  c"empno2" NUMBER(5) PRIMARY KEY,
     //  PRIMARY KEY(pk"empno", pk"empno2")
     //)
-
-//    val foo =
-//      Apply(
-//        Select(
-//          Ident("ddl.CREATE"),
-//          "ddl.CREATE.TABLE")
-//        , List(
-//          Apply(
-//            Apply(
-//              Select(
-//                Apply(
-//                  Ident(newTermName("StringContext")),
-//                  List(
-//                    Literal(Constant("abc"))
-//                  )
-//                ),
-//                newTermName("t")
-//              ),
-//              List()
-//            ),
-//            List(
-//              Apply(
-//                Select(
-//                  Apply(
-//                    Select(
-//                      Apply(
-//                        Select(
-//                          Apply(
-//                            Ident(newTermName("StringContext")), List(Literal(Constant("empno")))), newTermName("c")), List()), newTermName("NUMBER")), List(Literal(Constant(5)))), newTermName("PRIMARY")), List(Ident(ddl.KEY))), Apply(Select(Apply(Select(Apply(Select(Apply(Ident(newTermName("StringContext")), List(Literal(Constant("empno2")))), newTermName("c")), List()), newTermName("NUMBER")), List(Literal(Constant(5)))), newTermName("PRIMARY")), List(Ident(ddl.KEY))), Apply(Select(Ident(ddl.PRIMARY), newTermName("KEY")), List(Apply(Select(Apply(Ident(newTermName("StringContext")), List(Literal(Constant("empno")))), newTermName("pk")), List()), Apply(Select(Apply(Ident(newTermName("StringContext")), List(Literal(Constant("empno2")))), newTermName("pk")), List())))))))
-
-
-//    val foo =
-//    List(
-//      Block(
-//        List(
-//          ValDef(Modifiers(), newTermName("foos"), TypeTree(), Apply(
-//            Select(Ident("ddl.CREATE"), "ddl.CREATE.TABLE"),
-//            List(Apply(Apply(
-//              Select(Apply(Ident(newTermName("StringContext")),
-//                List(Literal(Constant("abc")))), newTermName("t")), List()
-//            ),
-//              List(
-//                Apply(
-//                  Select(Apply(Select(
-//                  Apply(Select(Apply(
-//                    Ident(newTermName("StringContext")), List(Literal(Constant("empno")))), newTermName("c")), List())
-//                  , newTermName("NUMBER")), List(Literal(Constant(5)))), newTermName("PRIMARY")), List(Ident("ddl.KEY"))
-//                ),
-//                Apply(
-//                  Select(
-//                    Apply(
-//                      Select(
-//                        Apply(
-//                          Select(
-//                            Apply(
-//                              Ident(
-//                                newTermName("StringContext")
-//                              ),
-//                              List(
-//                                Literal(Constant("empno2"))
-//                              )
-//                            ),
-//                            newTermName("c")
-//                          ),
-//                          List()
-//                        ),
-//                        newTermName("NUMBER")
-//                      ),
-//                      List(Literal(Constant(5)))
-//                    ),
-//                    newTermName("PRIMARY")
-//                  ),
-//                  List(Ident("ddl.KEY"))
-//                ),
-//                Apply(
-//                  Select(
-//                    Ident("ddl.PRIMARY"),
-//                    newTermName("KEY")
-//                  ),
-//                  List(
-//                    Apply(
-//                      Select(
-//                        Apply(
-//                          Ident(newTermName("StringContext")),
-//                          List(
-//                            Literal(Constant("empno"))
-//                          )
-//                        ),
-//                        newTermName("pk")
-//                      ),
-//                      List()
-//                    ),
-//                    Apply(
-//                      Select(
-//                        Apply(
-//                          Ident(newTermName("StringContext")),
-//                          List(
-//                            Literal(Constant("empno2"))
-//                          )
-//                        ),
-//                        newTermName("pk")
-//                      ),
-//                      List()
-//                    )
-//                  )
-//                )
-//              )
-//            )
-//            )
-//          ))), Literal(Constant(()))))
 
 //    val n_raw =
 //      for {
