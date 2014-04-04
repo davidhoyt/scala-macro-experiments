@@ -10,7 +10,7 @@ object CREATE {
 //        table
 //      }
 
-      def apply[T <: DdlTableExpression[Any]](n: Named[T]) =
+      def apply[T <: DdlTableExpression[Any]](n: Named[T]): Unit =
         macro TableMacros.create[T]
     }
   }

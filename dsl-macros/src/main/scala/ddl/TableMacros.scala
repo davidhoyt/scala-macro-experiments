@@ -1,23 +1,24 @@
 package ddl
 
-import scala.reflect.macros.Context
+import scala.reflect.macros._
 import scala.language.experimental.macros
 import scala.annotation.StaticAnnotation
 
 class Schema extends StaticAnnotation {
-  def macroTransform(annottees: Any*) = macro TableMacros.schema
+  def macroTransform(annottees: Any*): Any = macro TableMacros.schema
 }
 
 object TableMacros extends ReflectionUtils {
-  def check(t: Table) = macro TableMacros.check_impl
-  def check_impl(c: Context)(t: c.Expr[Table]): c.Expr[Unit] = {
+  def check(t: Table): Unit = macro TableMacros.check_impl
+  def check_impl(c: blackbox.Context)(t: c.Expr[Table]): c.Expr[Unit] = {
     import c.universe._
     //<[ () ]>
     c.abort(c.enclosingPosition, "DOH")
-    c.Expr[Unit](Block(List(), Literal(Constant())))
+    reify(())
+    //c.Expr[Unit](Block(List(), Literal(Constant())))
   }
 
-  def schema(c: Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
+  def schema(c: blackbox.Context)(annottees: c.Expr[Any]*): c.Expr[Any] = {
     import c.universe._
     import c.{ universe => u }
 
@@ -27,17 +28,17 @@ object TableMacros extends ReflectionUtils {
     reify(())
   }
 
-  def create[T: c.WeakTypeTag](c: Context)(n: c.Expr[Named[T]]): c.Expr[Unit] = {
+  def create[T: c.WeakTypeTag](c: blackbox.Context)(n: c.Expr[Named[T]]): c.Expr[Unit] = {
     //http://www.scottlogic.com/blog/2013/06/05/scala-macros-part-1.html
     import c.universe._
     import c.{ universe => u }
     import c.universe.{Name => uName}
 
-    val named_string_interpolator_term = newTermName("NamedStringInterpolator")
-    val scala_term = newTermName("scala")
-    val string_context_name = newTermName("StringContext")
-    val apply_term = newTermName("apply")
-    val table_string_interpolator_name = newTermName("t")
+    val named_string_interpolator_term = TermName("NamedStringInterpolator")
+    val scala_term = TermName("scala")
+    val string_context_name = TermName("StringContext")
+    val apply_term = TermName("apply")
+    val table_string_interpolator_name = TermName("t")
 
     def findTableName(t: Tree): Boolean = t match {
       case q"${_}.NamedStringInterpolator(scala.StringContext.apply(${_})).t" =>
@@ -85,7 +86,9 @@ object TableMacros extends ReflectionUtils {
 
 
     //val foos = CREATE TABLE t"abc" (
-    //  c"empno" NUMBER(5) PRIMARY KEY,
+    //  c"em=[],
+    // ='
+    // ])PO?uk ibojkuo7,im8o9nphmpno" NUMBER(5) PRIMARY KEY,
     //  c"empno2" NUMBER(5) PRIMARY KEY,
     //  PRIMARY KEY(pk"empno", pk"empno2")
     //)
@@ -105,7 +108,7 @@ object TableMacros extends ReflectionUtils {
         case class MyClass(myParam1: Int, myParam2: Option[String])
       }
     }.tree)
-    println(s"\n\nCase class:\n------------------\n$case_class_raw\n \n ")
+    //println(s"\n\nCase class:\n------------------\n$case_class_raw\n \n ")
 
 //    val r = reify {
 //      class Foo {
@@ -140,21 +143,21 @@ object TableMacros extends ReflectionUtils {
 }
 
 trait ReflectionUtils {
-  def constructor(u: scala.reflect.api.Universe) = {
-    import u._
-
-    DefDef(
-      Modifiers(),
-      nme.CONSTRUCTOR,
-      Nil,
-      Nil :: Nil,
-      TypeTree(),
-      Block(
-        Apply(
-          Select(Super(This(tpnme.EMPTY), tpnme.EMPTY), nme.CONSTRUCTOR),
-          Nil
-        )
-      )
-    )
-  }
+//  def constructor(u: scala.reflect.api.Universe) = {
+//    import u._
+//
+//    DefDef(
+//      Modifiers(),
+//      termNames.CONSTRUCTOR,
+//      Nil,
+//      Nil :: Nil,
+//      TypeTree(),
+//      Block(
+//        Apply(
+//          Select(Super(This(typeNames.EMPTY), typeNames.EMPTY), termNames.CONSTRUCTOR),
+//          Nil
+//        )
+//      )
+//    )
+//  }
 }
